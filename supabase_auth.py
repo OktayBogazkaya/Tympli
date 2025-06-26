@@ -47,6 +47,10 @@ def sign_out():
         st.error(f"Logout failed: {str(e)}")
 
 def auth_screen():
+    st.info("""
+    ### Welcome to the Beta version!  
+    For now, please use a temporary email to sign up. You can get one quickly from [temp-mail.org](https://temp-mail.org/).
+    """)
     st.title("Login or Sign Up")
     option = st.selectbox("Choose an option:", ["Login", "Sign Up"])
     email = st.text_input("Email")
