@@ -263,11 +263,20 @@ def display_watchlist():
 def main_app():
     """Main application interface"""
     
-    st.header("🔎 Multi-Platform Product Search")
-    st.write(f"Welcome, {st.session_state.user_email}!")
+    st.set_page_config(
+        page_title="Tympli",
+        page_icon="🛍️",
+        #layout="wide",
+        initial_sidebar_state="auto"
+    )
 
-    if st.button("Logout"):
-        sign_out()
+    st.header("🛍️ Tympli - Find Deals Simply. ")
+    
+    with st.sidebar:
+        st.sidebar.write(f"Welcome, {st.session_state.user_email}!")
+
+        if st.sidebar.button("Logout"):
+            sign_out()
     
     tab1, tab2 = st.tabs(["🔎 Product Search", "📋 Watchlist"])
     
