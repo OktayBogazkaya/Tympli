@@ -2,6 +2,7 @@
 
 langchain-mcp-adapters==0.1.7
 langchain-openai==0.3.23
+langgraph-prebuilt==0.2.2
 mcp==1.9.4
 pydantic==2.11.5
 st-social-media-links==0.1.5
