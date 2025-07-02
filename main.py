@@ -21,7 +21,7 @@ if "last_search_query" not in st.session_state:
     st.session_state["last_search_query"] = None
 
 # Main app logic - Handle authentication here ONLY
-if st.session_state.user_email:
+if st.session_state.get("user_email"):
     # User is authenticated - show sidebar and main content
     with st.sidebar:
         st.write(f"Welcome, {st.session_state.user_email}!")
