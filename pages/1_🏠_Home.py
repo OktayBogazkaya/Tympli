@@ -3,14 +3,13 @@ from utils.supabase_auth import sign_out
 import streamlit.components.v1 as components
 
 # Check if user is authenticated - redirect to main if not
-if not st.session_state.user_email:
+if not st.session_state.get("user_email"):
     st.error("Please log in to access this page.")
     st.info("Redirecting to login page...")
     st.switch_page("main.py")
 
 # Sidebar - Only show if authenticated (this check already passed above)
 with st.sidebar:
-    st.write(f"Welcome, {st.session_state.user_email}!")
     st.page_link("pages/1_🏠_Home.py", label="Home", icon="🏠")
     st.page_link("pages/2_🔎_Product_Search.py", label="Product Search", icon="🔍")
     st.page_link("pages/3_📋_Watchlist.py", label="Watchlist", icon="📋")

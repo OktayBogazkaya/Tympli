@@ -30,7 +30,7 @@ if "last_search_query" not in st.session_state:
     st.session_state["last_search_query"] = None
 
 # Check if user is authenticated - redirect to main if not
-if not st.session_state.user_email:
+if not st.session_state.get("user_email"):
     st.error("Please log in to access this page.")
     st.info("Redirecting to login page...")
     st.switch_page("main.py")
