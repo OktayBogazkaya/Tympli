@@ -24,7 +24,6 @@ if "last_search_query" not in st.session_state:
 if st.session_state.get("user_email"):
     # User is authenticated - show sidebar and main content
     with st.sidebar:
-        st.write(f"Welcome, {st.session_state.user_email}!")
         st.page_link("pages/1_🏠_Home.py", label="Home", icon="🏠")
         st.page_link("pages/2_🔎_Product_Search.py", label="Product Search", icon="🔍")
         st.page_link("pages/3_📋_Watchlist.py", label="Watchlist", icon="📋")
