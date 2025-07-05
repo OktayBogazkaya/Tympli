@@ -36,7 +36,7 @@ if not st.session_state.get("user_email"):
     st.switch_page("main.py")
 
 # Constants
-PLATFORMS = ["Amazon", "Walmart", "Best Buy", "Ebay", "Target", "Costco", "Five Below", "Newegg"]
+PLATFORMS = ["Amazon", "Walmart", "Ebay", "Target"]
 
 # Smithery.ai configuration
 SMITHERY_API_KEY = st.secrets.get("SMITHERY_API_KEY", "")
@@ -45,6 +45,7 @@ SMITHERY_API_KEY = st.secrets.get("SMITHERY_API_KEY", "")
 class Hit(BaseModel):
     title: str
     url: str
+    price: str
     rating: str
     image_url: str
 
@@ -75,13 +76,14 @@ def create_smithery_url():
     return url
 
 SYSTEM_PROMPT = (
-    "To find products, first use the search_egine tool. When finding products, use the web_data tool for the platform. "
+    "To find products, first use the search_engine tool. When finding products, use the web_data tool for the platform. "
     "If none exists, scrape as markdown. "
+    "Search all requested platforms in sequence, not in parallel. "
     "Example: Don't use web_data_bestbuy_products for search. Use it only for getting data on specific products you already found in search."
 )
 
-async def run_agent(query, platforms):
-    """Run agent using Smithery.ai hosted BrightData MCP server"""
+async def run_agent_single_platform(query, platform):
+    """Run agent for a single platform"""
     try:
         smithery_url = create_smithery_url()
         
@@ -91,7 +93,7 @@ async def run_agent(query, platforms):
                 tools = await load_mcp_tools(session)
                 agent = create_react_agent(model, tools, response_format=ProductSearchResponse)
 
-                prompt = f'{query}\n\nPlatforms: {",".join(platforms)}'
+                prompt = f'{query}\n\nPlatforms: {platform}'
                 result = await agent.ainvoke({
                     'messages': [
                         {"role": "system", "content": SYSTEM_PROMPT},
@@ -99,17 +101,32 @@ async def run_agent(query, platforms):
                     ]
                 })
 
-                print("Raw agent result:", result)
+                print(f"Raw agent result for {platform}:", result)
                 structured = result["structured_response"]
-                print(f"Structured response:", structured.model_dump(mode="json"))
+                print(f"Structured response for {platform}:", structured.model_dump(mode="json"))
                 return structured.model_dump()
             
     except Exception as e:
-        print(f"Error connecting to Smithery.ai MCP server: {str(e)}")
-        st.error(f"Smithery.ai connection error: {str(e)}")
+        print(f"Error connecting to Smithery.ai MCP server for {platform}: {str(e)}")
         return None
 
-# Sidebar - Only show if authenticated (this check already passed above)
+async def run_agent_sequential(query, platforms):
+    """Run agent sequentially for multiple platforms to avoid conflicts"""
+    all_results = {"platforms": []}
+    
+    for platform in platforms:
+        print(f"Searching {platform}...")
+        result = await run_agent_single_platform(query, platform)
+        if result and "platforms" in result:
+            all_results["platforms"].extend(result["platforms"])
+        
+        await asyncio.sleep(1)
+    
+    return all_results if all_results["platforms"] else None
+
+
+
+# Sidebar - Only show if authenticated
 with st.sidebar:
     st.page_link("pages/1_🏠_Home.py", label="Home", icon="🏠")
     st.page_link("pages/2_🔎_Product_Search.py", label="Product Search", icon="🔍")
@@ -136,23 +153,30 @@ selected_platforms = st.multiselect(
     help="Choose which platforms you want to search. More platforms = more results but slower search."
 )
 
+# Add warning for multiple platforms
+if len(selected_platforms) > 3:
+    st.warning("⚠️ Searching many platforms may take longer as each platform is searched individually for better reliability.")
+
 if st.button("🔍 Search Products", type="primary", disabled=not (query and selected_platforms)):
     if query and selected_platforms:
         with st.spinner("🔍 Searching across platforms... This may take a moment..."):
-            result = asyncio.run(run_agent(query, selected_platforms))
-
-        if result and "platforms" in result:
-            st.session_state.last_search_result = result
-            st.session_state.last_search_query = query
-        else:
-            st.error("No results found. Try adjusting your search query or selecting different platforms.")
+            try:
+                result = asyncio.run(run_agent_sequential(query, selected_platforms))
+                
+                if result and "platforms" in result and result["platforms"]:
+                    st.session_state.last_search_result = result
+                    st.session_state.last_search_query = query
+                else:
+                    st.error("No results found. Try adjusting your search query or selecting different platforms.")
+            except Exception as e:
+                st.error(f"Search failed: {str(e)}")
+                st.info("Try selecting fewer platforms or adjust your search query.")
 
 # Display results
 if st.session_state.get('last_search_result'):
     st.markdown("---")
     st.subheader("🎯 Search Results")
-    
-    # Show search summary
+
     total_products = sum(len(platform["hits"]) for platform in st.session_state.last_search_result["platforms"])
     
     for platform in st.session_state.last_search_result["platforms"]:
@@ -172,6 +196,10 @@ if st.session_state.get('last_search_result'):
                 
                 with col2:
                     st.markdown(f"**[{hit['title']}]({hit['url']})**")
+                    if hit["price"]:
+                        st.markdown(f"💰 {hit['price']}")
+                    else:
+                        st.markdown("💰 Price not available")                                 
                     if hit["rating"]:
                         st.markdown(f"⭐ {hit['rating']}")
                     else:
@@ -194,15 +222,19 @@ if st.session_state.get('last_search_result'):
                 
                 st.markdown("---")
 
-# Show tips if no search results
+# Show search tips if no results   
 if not st.session_state.get('last_search_result'):
     st.markdown("---")
     st.markdown("### 💡 Search Tips")
     
-
     st.write("""
     **Good search examples:**
     - "Find wireless bluetooth headphones with 4 star rating or above under $100"
     - "Find mouses from Logitech between \\$50 and \\$100"
     - "Find running shoes size 10 Nike"
+    
+    **For multiple platforms:**
+    - Each platform is searched individually for better reliability
+    - More platforms = longer search time but more comprehensive results
+    - Consider starting with 2-3 platforms for faster results
     """)

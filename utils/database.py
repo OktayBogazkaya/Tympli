@@ -44,6 +44,7 @@ def add_to_watchlist(user_id: str, product: dict, platform: str, search_query: s
             "user_id": user_id,
             "title": product["title"],
             "url": product["url"],
+            "price": product["price"],
             "rating": product["rating"],
             "image_url": product["image_url"],
             "platform": platform,

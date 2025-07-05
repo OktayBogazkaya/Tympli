@@ -19,7 +19,7 @@ if not st.session_state.get("user_email"):
     st.info("Redirecting to login page...")
     st.switch_page("main.py")
 
-# Sidebar - Only show if authenticated (this check already passed above)
+# Sidebar - Only show if authenticated
 with st.sidebar:
     st.page_link("pages/1_🏠_Home.py", label="Home", icon="🏠")
     st.page_link("pages/2_🔎_Product_Search.py", label="Product Search", icon="🔍")
@@ -54,6 +54,8 @@ if user:
                 with col2:
                     st.markdown(f"**[{item['title']}]({item['url']})**")
                     st.markdown(f"🏪 Platform: **{item['platform']}**")
+                    if item.get("price"):
+                        st.markdown(f"💰 Price: **{item['price']}**")
                     if item.get("rating"):
                         st.markdown(f"⭐ {item['rating']}")
                     if item.get("search_query"):

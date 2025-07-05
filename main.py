@@ -20,7 +20,7 @@ if "last_search_result" not in st.session_state:
 if "last_search_query" not in st.session_state:
     st.session_state["last_search_query"] = None
 
-# Main app logic - Handle authentication here ONLY
+# Main app logic
 if st.session_state.get("user_email"):
     # User is authenticated - show sidebar and main content
     with st.sidebar:
@@ -35,6 +35,5 @@ if st.session_state.get("user_email"):
     # Show main content
     st.switch_page("pages/1_🏠_Home.py")
 else:
-    # User not authenticated - show ONLY login screen (NO SIDEBAR)
-    # The sidebar will be completely hidden since we're not creating one
+    # User not authenticated - show ONLY login screen (no sidebar)
     auth_screen()
